@@ -32,6 +32,13 @@ const run = async () => {
     basePath: '/',
   });
 
+  server.post('/hook/:id', {}, (req, res) => {
+    res.send({
+      id: req.id,
+      body: req.body
+    })
+  })
+
   server.get(
     '/add-job',
     {
