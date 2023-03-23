@@ -8,69 +8,30 @@ import { env } from './env';
 import { createQueue, setupQueueProcessor } from './queue';
 
 interface AddJobQueryString {
-  id: string;
-  email: string;
+  id: string
+  email: string
 }
 
 const run = async () => {
   // const welcomeEmailQueue = createQueue('WelcomeEmailQueue');
-  const hookQueue = createQueue('Hooks');
+  const hookQueue = createQueue('Hooks')
+  const errorQueue = createQueue('Errors')
   // await setupQueueProcessor(welcomeEmailQueue.name);
   // await setupQueueProcessor(hookQueue.name);
 
-  const server: FastifyInstance<Server, IncomingMessage, ServerResponse> = fastify();
+  const server: FastifyInstance<Server, IncomingMessage, ServerResponse> = fastify()
 
-  const serverAdapter = new FastifyAdapter();
+  const serverAdapter = new FastifyAdapter()
   createBullBoard({
-    queues: [new BullMQAdapter(hookQueue)],
-    serverAdapter,
-  });
-  serverAdapter.setBasePath('/');
-  server.register(serverAdapter.registerPlugin(), {
-    prefix: '/',
-    basePath: '/',
-  });
+    queues: [new BullMQAdapter(hookQueue), new BullMQAdapter(errorQueue)],
+    serverAdapter
+  })
 
-  // server.get(
-  //   '/add-job',
-  //   {
-  //     schema: {
-  //       querystring: {
-  //         type: 'object',
-  //         properties: {
-  //           title: { type: 'string' },
-  //           id: { type: 'string' },
-  //         },
-  //       },
-  //     },
-  //   },
-  //   (req: FastifyRequest<{ Querystring: AddJobQueryString }>, reply) => {
-  //     if (
-  //       req.query == null ||
-  //       req.query.email == null ||
-  //       req.query.id == null
-  //     ) {
-  //       reply
-  //         .status(400)
-  //         .send({ error: 'Requests must contain both an id and a email' });
-  //
-  //       return;
-  //     }
-  //
-  //     const { email, id } = req.query;
-  //     hookQueue.add(`WelcomeEmail-${id}`, { email });
-  //
-  //     reply.send({
-  //       ok: true,
-  //     });
-  //   }
-  // );
+  serverAdapter.setBasePath('/')
+  server.register(serverAdapter.registerPlugin(), {prefix: '/', basePath: '/'})
 
-  await server.listen({ port: env.PORT, host: '0.0.0.0' });
-  console.log(
-    `To populate the queue and demo the UI, run: curl https://${env.RAILWAY_STATIC_URL}/add-job?id=1&email=hello%40world.com`
-  );
-};
+  await server.listen({ port: env.PORT, host: '0.0.0.0' })
+}
 
 run().catch((e) => {
   console.error(e);
